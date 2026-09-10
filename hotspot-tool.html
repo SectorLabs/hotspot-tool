@@ -1,447 +1,841 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Krpano Hotspot Generator (Advanced Editor)</title>
+    <title>Krpano Ultimate Hotspot Editor</title>
     <style>
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { margin: 0; padding: 0; background: #1e1e24; color: #fff; height: 100vh; display: flex; flex-direction: column; }
-        header { background: #2b2b36; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #3f3f4e; }
-        .app-container { display: flex; flex: 1; overflow: hidden; }
-        
-        .sidebar { width: 340px; background: #252530; border-right: 1px solid #3f3f4e; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
-        .panel { background: #2b2b36; border-radius: 6px; padding: 12px; border: 1px solid #3f3f4e; }
-        .panel h3 { margin-top: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; color: #ad952f; }
-        label { display: block; font-size: 12px; margin-bottom: 5px; color: #ccc; }
-        input, select, button, textarea { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #4f4f60; background: #1e1e24; color: #fff; font-size: 13px; }
-        button { background: #ad952f; color: #000; font-weight: bold; border: none; cursor: pointer; transition: background 0.2s; }
-        button:hover { background: #c2a938; }
-        button.secondary { background: #3f3f4e; color: #fff; }
-        button.danger { background: #8b0000; color: #fff; }
-        button.success { background: #4CAF50; color: #fff; }
-        
-        .editor-view { flex: 1; background: #141418; position: relative; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .canvas-wrapper { position: relative; }
-        canvas { display: block; cursor: crosshair; }
-        
-        .apt-list { max-height: 180px; overflow-y: auto; margin-bottom: 10px; border: 1px solid #3f3f4e; border-radius: 4px; padding: 4px; }
-        .apt-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: #1e1e24; margin-bottom: 4px; border-radius: 4px; cursor: pointer; border: 1px solid transparent; }
-        .apt-item.selected { border-color: #ad952f; background: #3a3826; }
-        textarea { height: 150px; font-family: monospace; font-size: 11px; white-space: pre; }
-        
-        #drawControls { display: none; background: #3a3826; padding: 10px; border-radius: 4px; border: 1px dashed #ad952f; }
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1e1e24;
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Welcome Screen --- */
+        #welcomeScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(20, 20, 24, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .mode-container {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .mode-card {
+            background: #2b2b36;
+            border: 2px solid #3f3f4e;
+            padding: 30px;
+            border-radius: 12px;
+            width: 320px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .mode-card:hover {
+            border-color: #ad952f;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .mode-card h2 {
+            color: #ad952f;
+            margin-top: 0;
+        }
+
+        .mode-card p {
+            color: #aaa;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* --- Main App --- */
+        header {
+            background: #2b2b36;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #3f3f4e;
+        }
+
+        .app-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: #252530;
+            border-right: 1px solid #3f3f4e;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .panel {
+            background: #2b2b36;
+            border-radius: 6px;
+            padding: 12px;
+            border: 1px solid #3f3f4e;
+        }
+
+        .panel h3 {
+            margin-top: 0;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #ad952f;
+            border-bottom: 1px solid #3f3f4e;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #ccc;
+        }
+
+        input,
+        select,
+        button {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border: 1px solid #4f4f60;
+            background: #1e1e24;
+            color: #fff;
+            font-size: 13px;
+        }
+
+        button {
+            background: #ad952f;
+            color: #000;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #c2a938;
+        }
+
+        button.secondary {
+            background: #3f3f4e;
+            color: #fff;
+        }
+
+        button.secondary:hover {
+            background: #525266;
+        }
+
+        button.danger {
+            background: #8b0000;
+            color: #fff;
+        }
+
+        button.success {
+            background: #4CAF50;
+            color: #fff;
+        }
+
+        button.success:hover {
+            background: #45a049;
+        }
+
+        .editor-view {
+            flex: 1;
+            background: #141418;
+            position: relative;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+            cursor: crosshair;
+            background: #1e1e24;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .apt-list {
+            max-height: 180px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            border: 1px solid #3f3f4e;
+            border-radius: 4px;
+            padding: 4px;
+            background: #1e1e24;
+        }
+
+        .apt-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 8px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .apt-item:hover {
+            background: #2b2b36;
+        }
+
+        .apt-item.selected {
+            border-color: #ad952f;
+            background: #3a3826;
+        }
+
+        textarea {
+            height: 150px;
+            font-family: monospace;
+            font-size: 11px;
+            white-space: pre;
+            width: 100%;
+            background: #1e1e24;
+            color: #fff;
+            border: 1px solid #4f4f60;
+            padding: 8px;
+            border-radius: 4px;
+            resize: vertical;
+        }
+
+        #drawControls {
+            display: none;
+            background: #3a3826;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px dashed #ad952f;
+        }
     </style>
 </head>
+
 <body>
 
-<header>
-    <div><strong>Krpano AI Hotspot Generator</strong> <span style="font-size: 12px; color: #888;">Pan, Zoom, Draw & Edit Mode</span></div>
-</header>
+    <!-- WELCOME SCREEN -->
+    <div id="welcomeScreen">
+        <h1 style="color: #fff; font-size: 32px; margin-bottom: 10px;">Select Your Workflow</h1>
 
-<div class="app-container">
-    <div class="sidebar">
-        <!-- 1. Basic Settings -->
-        <div class="panel">
-            <h3>1. Load Floor Plan</h3>
-            <label>Floor Plan Image</label>
-            <input type="file" id="imageInput" accept="image/*">
-            
-            <label>Hotspot Name Prefix</label>
-            <input type="text" id="hotspotPrefix" value="e28A_eightthfloor_" placeholder="e.g., e28_firstfloor_">
-            
-            <div style="display:flex; gap:10px;">
-                <div><label>HFOV</label><input type="number" id="hfov" value="1.00" step="0.01"></div>
-                <div><label>VFOV</label><input type="number" id="vfov" value="0.563040" step="0.000001"></div>
-            </div>
-        </div>
-
-        <!-- Zoom -->
-        <div class="panel">
-            <h3>Zoom & Pan</h3>
-            <p style="font-size: 11px; color:#aaa; margin-top:0;"><i>Tip: Right-click & drag, or Spacebar+Drag to pan image.</i></p>
-            <div style="display:flex; gap:5px; align-items:center;">
-                <button id="btnZoomOut" class="secondary" style="width:40px;">-</button>
-                <span id="zoomLabel" style="font-size:12px; flex:1; text-align:center;">100%</span>
-                <button id="btnZoomIn" class="secondary" style="width:40px;">+</button>
-                <button id="btnZoomFit" class="secondary">Fit</button>
-            </div>
-        </div>
-
-        <!-- Edit & Draw -->
-        <div class="panel">
-            <h3>2. Manage Hotspots</h3>
-            
-            <button id="btnShowAll" class="secondary" style="margin-bottom: 10px;">👁️ Show All Hotspots</button>
-            
-            <div class="apt-list" id="aptList"></div>
-            
-            <!-- Default Controls -->
-            <div id="defaultControls">
-                <button id="btnStartDraw">+ Create Manual Polygon</button>
-                <button class="danger" id="btnDeleteApt" style="margin-top: 5px;">Delete Selected</button>
+        <div class="mode-container">
+            <!-- Mode A -->
+            <div class="mode-card" onclick="initApp('image')">
+                <h2>🖼️ Image Mode</h2>
+                <p>Upload a standalone image, draw your polygons, and copy the generated XML code.</p>
+                <span
+                    style="display:inline-block; margin-top:15px; padding: 5px 10px; background:#3f3f4e; border-radius:15px; font-size:11px;">Best
+                    for single files</span>
             </div>
 
-            <!-- Drawing Controls -->
-            <div id="drawControls">
-                <p style="font-size: 12px; margin-top: 0; margin-bottom: 10px; color: #FFD700;">✏️ Click on canvas to add points.</p>
-                <button id="btnFinishDraw" class="success">Finish Shape</button>
-                <button id="btnCancelDraw" class="danger" style="margin-bottom: 0;">Cancel</button>
+            <!-- Mode B -->
+            <div class="mode-card" onclick="initApp('folder')">
+                <h2>📁 Project Mode</h2>
+                <p>Select your krpano folder, choose a scene, load existing hotspots automatically, edit & save.</p>
+                <span
+                    style="display:inline-block; margin-top:15px; padding: 5px 10px; background:#4CAF50; color:#fff; border-radius:15px; font-size:11px;">Recommended
+                    (Requires Local Server)</span>
             </div>
-        </div>
-
-        <!-- AI Engine -->
-        <div class="panel">
-            <h3>3. AI Auto-Detect (Optional)</h3>
-            <label>API Provider</label>
-            <select id="apiProvider" onchange="toggleApiKey()">
-                <option value="ollama">Local Offline AI (Ollama)</option>
-                <option value="nvidia">NVIDIA API (Free Tier)</option>
-                <option value="openai">OpenAI (GPT-4o Vision)</option>
-            </select>
-            <div id="apiKeyContainer" style="display:none;">
-                <input type="password" id="apiKey" placeholder="Paste API Key here">
-            </div>
-            <button id="btnRunAI" class="secondary" style="margin-top:5px;">Run AI Auto-Detection</button>
-        </div>
-
-        <!-- Export -->
-        <div class="panel">
-            <h3>4. Krpano XML Code</h3>
-            <button id="btnExportXML">Generate krpano Hotspots XML</button>
-            <textarea id="xmlOutput" readonly placeholder="Click Generate to produce <hotspot> tags..."></textarea>
         </div>
     </div>
 
-    <div class="editor-view" id="editorView">
-        <div class="canvas-wrapper">
-            <canvas id="canvas"></canvas>
+    <!-- MAIN APP -->
+    <div id="mainApp" style="display:none; height: 100vh; flex-direction: column;">
+        <header>
+            <div>
+                <button class="secondary" style="width:auto; padding: 5px 10px; margin:0 15px 0 0;"
+                    onclick="location.reload()">⬅ Back</button>
+                <strong id="headerTitle">Krpano Hotspot Editor</strong>
+            </div>
+            <div id="folderStatus" style="font-size: 12px; color: #FFD700;"></div>
+        </header>
+
+        <div class="app-container">
+            <div class="sidebar">
+
+                <!-- MODULE 1A: IMAGE MODE SETUP -->
+                <div id="panelImageSetup" class="panel" style="display: none;">
+                    <h3>1. Image Setup</h3>
+                    <label>Upload Floor Plan / Image</label>
+                    <input type="file" id="standaloneImageInput" accept="image/*">
+
+                    <label>Hotspot Name Prefix</label>
+                    <input type="text" id="prefixImage" value="hotspot_" placeholder="e.g. floor1_">
+
+                    <div style="display:flex; gap:10px;">
+                        <div><label>HFOV</label><input type="number" id="hfovImg" value="1.00" step="0.01"></div>
+                        <div><label>VFOV</label><input type="number" id="vfovImg" value="0.563040" step="0.000001">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE 1B: FOLDER MODE SETUP -->
+                <div id="panelFolderSetup" class="panel" style="display: none;">
+                    <h3>1. Project Setup</h3>
+                    <button id="btnOpenFolder" class="success">📂 Open Krpano Folder</button>
+
+                    <div id="folderControls"
+                        style="display: none; margin-top: 15px; border-top: 1px solid #3f3f4e; padding-top: 15px;">
+                        <label>Select Target Scene</label>
+                        <select id="sceneSelect" onchange="onSceneChange()">
+                            <option value="">-- No scenes found --</option>
+                        </select>
+
+                        <div
+                            style="background: #1e1e24; padding: 10px; border-radius: 4px; margin-bottom: 10px; border: 1px dashed #4f4f60;">
+                            <label style="color:#FFD700;">Upload Original High-Res Image (Optional):</label>
+                            <input type="file" id="highResOverride" accept="image/*" style="margin-bottom:0;">
+                        </div>
+
+                        <label>Hotspot Name Prefix</label>
+                        <input type="text" id="prefixFolder" value="" placeholder="Auto-fills from scene">
+
+                        <div style="display:flex; gap:10px;">
+                            <div><label>HFOV</label><input type="number" id="hfovFol" value="1.00" step="0.01"></div>
+                            <div><label>VFOV</label><input type="number" id="vfovFol" value="0.563040" step="0.000001">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE 2: ZOOM & PAN -->
+                <div class="panel">
+                    <h3>Zoom & Pan</h3>
+                    <p style="font-size: 11px; color:#aaa; margin-top:0;"><i>Tip: Right-click & drag, or Spacebar+Drag
+                            to pan.</i></p>
+                    <div style="display:flex; gap:5px; align-items:center;">
+                        <button id="btnZoomOut" class="secondary" style="width:40px;">-</button>
+                        <span id="zoomLabel" style="font-size:12px; flex:1; text-align:center;">100%</span>
+                        <button id="btnZoomIn" class="secondary" style="width:40px;">+</button>
+                        <button id="btnZoomFit" class="secondary">Fit</button>
+                    </div>
+                </div>
+
+                <!-- MODULE 3: DRAWING -->
+                <div class="panel">
+                    <h3>2. Manage Hotspots</h3>
+                    <button id="btnShowAll" class="secondary" style="margin-bottom: 10px;">👁️ Show All
+                        Hotspots</button>
+                    <div class="apt-list" id="aptList"></div>
+
+                    <div id="defaultControls">
+                        <button id="btnStartDraw">+ Create Manual Polygon</button>
+                        <button class="danger" id="btnDeleteApt" style="margin-top: 5px;">Delete Selected</button>
+                    </div>
+
+                    <div id="drawControls">
+                        <p style="font-size: 12px; margin-top: 0; margin-bottom: 10px; color: #FFD700;">✏️ Click on
+                            canvas to add points.</p>
+                        <button id="btnFinishDraw" class="success">Finish Shape</button>
+                        <button id="btnCancelDraw" class="danger" style="margin-bottom: 0;">Cancel</button>
+                    </div>
+                </div>
+
+                <!-- MODULE 4A: EXPORT IMAGE MODE -->
+                <div id="panelExportImage" class="panel" style="display: none;">
+                    <h3>3. Export Code</h3>
+                    <button id="btnGenerateCode" class="secondary">Generate XML Code</button>
+                    <textarea id="xmlOutput" readonly placeholder="Output will appear here..."></textarea>
+                </div>
+
+                <!-- MODULE 4B: EXPORT FOLDER MODE -->
+                <div id="panelExportFolder" class="panel" style="display: none;">
+                    <h3>3. Save Changes</h3>
+                    <button id="btnSaveXML" class="success" style="padding: 12px; font-size: 14px;">💾 Overwrite
+                        tour.xml</button>
+                </div>
+
+            </div>
+
+            <div class="editor-view" id="editorView">
+                <div class="canvas-wrapper">
+                    <canvas id="canvas" width="600" height="400"></canvas>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    // --- Application State ---
-    let appMode = 'VIEW_ALL'; // Modes: 'VIEW_ALL', 'VIEW_SINGLE', 'DRAWING'
-    let img = new Image();
-    let apartments = []; 
-    let drawingPoints = []; 
-    let selectedAptIndex = -1;
-    let selectedPointIndex = -1;
-    let isDragging = false;
-    let zoomLevel = 1.0;
-    const HANDLE_RADIUS = 6;
-    
-    // Panning State
-    let isPanning = false;
-    let startPanX = 0, startPanY = 0;
-    let startScrollLeft = 0, startScrollTop = 0;
-    let spacePressed = false;
-    const editorView = document.getElementById('editorView');
-    
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const aptListEl = document.getElementById('aptList');
+    <script>
+        // --- Application State ---
+        let currentWorkflow = '';
+        let appMode = 'VIEW_ALL';
+        let img = new Image();
+        let apartments = [];
+        let drawingPoints = [];
+        let selectedAptIndex = -1;
+        let selectedPointIndex = -1;
+        let isDragging = false;
+        let zoomLevel = 1.0;
+        const HANDLE_RADIUS = 6;
 
-    // --- Spacebar Panning Support ---
-    window.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT') {
-            spacePressed = true;
-            canvas.style.cursor = 'grab';
-            e.preventDefault();
+        // File System State
+        let projectDirHandle = null;
+        let xmlFileHandle = null;
+        let originalXmlContent = "";
+        let sceneDataMap = {};
+
+        // Panning State
+        let isPanning = false;
+        let startPanX = 0, startPanY = 0;
+        let startScrollLeft = 0, startScrollTop = 0;
+        let spacePressed = false;
+
+        const editorView = document.getElementById('editorView');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const aptListEl = document.getElementById('aptList');
+
+        // --- INITIALIZATION ---
+        function initApp(mode) {
+            currentWorkflow = mode;
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'flex';
+
+            if (mode === 'image') {
+                document.getElementById('headerTitle').innerText = "Standalone Image Editor";
+                document.getElementById('panelImageSetup').style.display = 'block';
+                document.getElementById('panelExportImage').style.display = 'block';
+                drawHelperText("Upload an Image from the left panel to begin.");
+            } else {
+                document.getElementById('headerTitle').innerText = "Direct Project Folder Editor";
+                document.getElementById('panelFolderSetup').style.display = 'block';
+                document.getElementById('panelExportFolder').style.display = 'block';
+                drawHelperText("Click 'Open Krpano Folder' to begin.");
+            }
         }
-    });
-    window.addEventListener('keyup', (e) => {
-        if (e.code === 'Space') {
-            spacePressed = false;
-            canvas.style.cursor = 'crosshair';
+
+        function drawHelperText(text) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#FFD700"; ctx.font = "16px Arial"; ctx.textAlign = "center";
+            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
         }
-    });
 
-    // Prevent context menu to allow right-click dragging
-    canvas.addEventListener('contextmenu', e => e.preventDefault());
+        // --- IMAGE LOADING ENGINE ---
+        // Universal image onload handler to calculate everything properly
+        img.onload = () => {
+            fitToScreen();
+            if (currentWorkflow === 'folder' && originalXmlContent) {
+                loadExistingHotspotsFromXML();
+            }
+        };
 
-    // --- File & Zoom Handling ---
-    document.getElementById('imageInput').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (evt) => { img.onload = () => fitToScreen(); img.src = evt.target.result; };
-        reader.readAsDataURL(file);
-    });
+        // Workflow A: Image Input
+        document.getElementById('standaloneImageInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('prefixImage').value = file.name.replace(/\.[^/.]+$/, "") + "_";
+            const reader = new FileReader();
+            reader.onload = (evt) => { img.src = evt.target.result; };
+            reader.readAsDataURL(file);
+        });
 
-    function setZoom(newZoom) {
-        zoomLevel = Math.max(0.05, Math.min(5.0, newZoom));
-        document.getElementById('zoomLabel').innerText = Math.round(zoomLevel * 100) + '%';
-        if (img.src) { canvas.width = img.width * zoomLevel; canvas.height = img.height * zoomLevel; redraw(); }
-    }
+        // Workflow B: High-Res Override
+        document.getElementById('highResOverride').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => { img.src = evt.target.result; };
+            reader.readAsDataURL(file);
+        });
 
-    function fitToScreen() {
-        if (!img.src) return;
-        const scaleX = (editorView.clientWidth - 40) / img.width;
-        const scaleY = (editorView.clientHeight - 40) / img.height;
-        setZoom(Math.min(scaleX, scaleY) || 1.0);
-    }
+        // --- WORKFLOW A: EXPORT ---
+        document.getElementById('btnGenerateCode').addEventListener('click', () => {
+            if (apartments.length === 0) return alert("Please draw at least one hotspot!");
+            const hfov = parseFloat(document.getElementById('hfovImg').value);
+            const vfov = parseFloat(document.getElementById('vfovImg').value);
+            const prefix = document.getElementById('prefixImage').value;
 
-    document.getElementById('btnZoomIn').addEventListener('click', () => setZoom(zoomLevel * 1.25));
-    document.getElementById('btnZoomOut').addEventListener('click', () => setZoom(zoomLevel / 1.25));
-    document.getElementById('btnZoomFit').addEventListener('click', fitToScreen);
-    canvas.addEventListener('wheel', (e) => { 
-        if(e.ctrlKey) return; // Allow normal browser zoom
-        e.preventDefault(); 
-        setZoom(e.deltaY < 0 ? zoomLevel * 1.1 : zoomLevel / 1.1); 
-    });
-
-    // --- Core Render Logic ---
-    function redraw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (img.src) ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-        if (appMode === 'DRAWING' && drawingPoints.length > 0) {
-            ctx.beginPath();
-            ctx.moveTo(drawingPoints[0].x * zoomLevel, drawingPoints[0].y * zoomLevel);
-            for (let i = 1; i < drawingPoints.length; i++) ctx.lineTo(drawingPoints[i].x * zoomLevel, drawingPoints[i].y * zoomLevel);
-            ctx.strokeStyle = "#FFD700"; ctx.lineWidth = 2; ctx.stroke();
-            drawingPoints.forEach(pt => {
-                ctx.beginPath(); ctx.arc(pt.x * zoomLevel, pt.y * zoomLevel, HANDLE_RADIUS, 0, Math.PI * 2);
-                ctx.fillStyle = "#FF0000"; ctx.fill(); ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 1.5; ctx.stroke();
+            let xml = '';
+            apartments.forEach(apt => {
+                xml += `\t\t<hotspot name="${prefix}${apt.number}" style="mypolygonalhotspotstylename"\n\t\t\tbordercolor="" borderwidth="1"\n\t\t\tfillcolor="0xAD952F" fillalpha="0.2" capture="false"\n\t\t\tzorder="5"\n\t\t\tonhover="set(fillalpha, 0.5);"\n\t\t\tonout="set(fillalpha, 0.2);">\n`;
+                apt.points.forEach(p => {
+                    const ath = ((p.x / img.width) - 0.5) * hfov; const atv = ((p.y / img.height) - 0.5) * vfov;
+                    xml += `\t\t\t<point ath="${ath.toFixed(6)}" atv="${atv.toFixed(6)}" />\n`;
+                });
+                xml += `\t\t</hotspot>\n`;
             });
-        } else if (appMode === 'VIEW_ALL') {
-            apartments.forEach(apt => drawPolygon(apt, false));
-        } else if (appMode === 'VIEW_SINGLE') {
-            if (selectedAptIndex !== -1 && apartments[selectedAptIndex]) drawPolygon(apartments[selectedAptIndex], true);
+            document.getElementById('xmlOutput').value = xml;
+        });
+
+        // --- WORKFLOW B: FOLDER LOGIC ---
+        document.getElementById('btnOpenFolder').addEventListener('click', async () => {
+            try {
+                projectDirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                document.getElementById('folderStatus').innerText = "📁 " + projectDirHandle.name;
+
+                try {
+                    xmlFileHandle = await projectDirHandle.getFileHandle('tour.xml', { create: false });
+                    const file = await xmlFileHandle.getFile();
+                    originalXmlContent = await file.text();
+
+                    document.getElementById('folderControls').style.display = 'block';
+                    parseScenesFromXML(originalXmlContent);
+                } catch (err) {
+                    alert("Error: 'tour.xml' not found in this folder.");
+                }
+            } catch (err) {
+                if (err.name !== 'AbortError') alert("Folder access denied.");
+            }
+        });
+
+        function parseScenesFromXML(xmlText) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+            const scenes = xmlDoc.getElementsByTagName("scene");
+
+            const select = document.getElementById('sceneSelect');
+            select.innerHTML = '';
+            sceneDataMap = {};
+
+            for (let i = 0; i < scenes.length; i++) {
+                const sceneName = scenes[i].getAttribute("name");
+                if (sceneName) {
+                    let imgUrl = "";
+                    const preview = scenes[i].getElementsByTagName("preview")[0];
+                    if (preview && preview.getAttribute("url")) {
+                        imgUrl = preview.getAttribute("url");
+                    }
+                    sceneDataMap[sceneName] = { url: imgUrl };
+                    let option = document.createElement('option');
+                    option.value = sceneName; option.text = sceneName;
+                    select.appendChild(option);
+                }
+            }
+            if (scenes.length > 0) onSceneChange();
         }
-    }
 
-    function drawPolygon(apt, isSelected) {
-        if (apt.points.length === 0) return;
-        
-        ctx.beginPath();
-        ctx.moveTo(apt.points[0].x * zoomLevel, apt.points[0].y * zoomLevel);
-        for (let i = 1; i < apt.points.length; i++) ctx.lineTo(apt.points[i].x * zoomLevel, apt.points[i].y * zoomLevel);
-        ctx.closePath();
+        async function onSceneChange() {
+            const select = document.getElementById('sceneSelect');
+            if (select.value) {
+                document.getElementById('prefixFolder').value = select.value + "_";
+                const imgPath = sceneDataMap[select.value].url;
 
-        ctx.fillStyle = isSelected ? "rgba(255, 215, 0, 0.4)" : "rgba(173, 149, 47, 0.25)"; ctx.fill(); 
-        ctx.strokeStyle = isSelected ? "#FFD700" : "#AD952F"; ctx.lineWidth = isSelected ? 3 : 1.5; ctx.stroke();
-        
-        let cx = 0, cy = 0; apt.points.forEach(p => { cx += p.x; cy += p.y; }); cx /= apt.points.length; cy /= apt.points.length;
-        ctx.fillStyle = "#FFFFFF"; ctx.font = "bold " + Math.max(12, Math.min(18, 14 * zoomLevel)) + "px Arial";
-        ctx.shadowColor = "black"; ctx.shadowBlur = 4; ctx.fillText(apt.number, (cx * zoomLevel) - 10, (cy * zoomLevel) + 5); ctx.shadowBlur = 0;
+                apartments = [];
+                updateUI();
 
-        if (isSelected) {
-            apt.points.forEach((pt, pIdx) => {
-                ctx.beginPath(); ctx.arc(pt.x * zoomLevel, pt.y * zoomLevel, HANDLE_RADIUS, 0, Math.PI * 2);
-                ctx.fillStyle = (pIdx === selectedPointIndex) ? "#FF0000" : "#00E5FF"; ctx.fill();
-                ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 1.5; ctx.stroke();
-            });
-        }
-    }
-
-    function getCanvasMousePos(e) {
-        const rect = canvas.getBoundingClientRect();
-        return { x: ((e.clientX - rect.left) * (canvas.width / rect.width)) / zoomLevel, y: ((e.clientY - rect.top) * (canvas.height / rect.height)) / zoomLevel };
-    }
-
-    // --- Mouse Interactions ---
-    canvas.addEventListener('mousedown', (e) => {
-        // Trigger Panning if Right Click, Middle Click, or Spacebar+Left Click
-        if (e.button === 1 || e.button === 2 || (spacePressed && e.button === 0)) {
-            isPanning = true;
-            startPanX = e.pageX; startPanY = e.pageY;
-            startScrollLeft = editorView.scrollLeft; startScrollTop = editorView.scrollTop;
-            canvas.style.cursor = 'grabbing';
-            e.preventDefault();
-            return;
+                if (imgPath) {
+                    drawHelperText("Loading preview image & checking for existing hotspots...");
+                    await loadLocalImage(imgPath);
+                } else {
+                    img.src = "";
+                    drawHelperText("No preview image found in XML for this scene. Upload a High-Res Image to continue.");
+                }
+            }
         }
 
-        if (e.button !== 0) return; // Ignore other buttons for drawing/selecting
+        async function loadLocalImage(path) {
+            try {
+                const pathParts = path.split('/');
+                let currentDir = projectDirHandle;
+                for (let i = 0; i < pathParts.length - 1; i++) {
+                    currentDir = await currentDir.getDirectoryHandle(pathParts[i]);
+                }
+                const fileHandle = await currentDir.getFileHandle(pathParts[pathParts.length - 1]);
+                const file = await fileHandle.getFile();
+                const objectUrl = URL.createObjectURL(file);
+                // This will trigger img.onload which will fit screen and parse existing hotspots
+                img.src = objectUrl;
+            } catch (err) {
+                drawHelperText("Could not auto-load image. Please upload a High-Res Override.");
+            }
+        }
 
-        const pos = getCanvasMousePos(e);
+        // --- REVERSE MATH: LOAD EXISTING HOTSPOTS ---
+        function loadExistingHotspotsFromXML() {
+            if (!originalXmlContent || !img.src || img.src === "") return;
+            const selectedScene = document.getElementById('sceneSelect').value;
+            if (!selectedScene) return;
 
-        if (appMode === 'DRAWING') {
-            drawingPoints.push(pos);
+            // Parse XML DOM
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(originalXmlContent, "text/xml");
+            const scenes = xmlDoc.getElementsByTagName("scene");
+
+            let targetScene = null;
+            for (let i = 0; i < scenes.length; i++) {
+                if (scenes[i].getAttribute("name") === selectedScene) { targetScene = scenes[i]; break; }
+            }
+            if (!targetScene) return;
+
+            const hfov = parseFloat(document.getElementById('hfovFol').value);
+            const vfov = parseFloat(document.getElementById('vfovFol').value);
+            const prefix = document.getElementById('prefixFolder').value;
+
+            apartments = [];
+            const hotspots = targetScene.getElementsByTagName("hotspot");
+
+            for (let i = 0; i < hotspots.length; i++) {
+                const hs = hotspots[i];
+                const points = hs.getElementsByTagName("point");
+
+                // Only parse if it's a polygon (has <point> children)
+                if (points.length > 2) {
+                    let name = hs.getAttribute("name") || "unknown";
+                    if (name.startsWith(prefix)) name = name.substring(prefix.length);
+
+                    let ptsArray = [];
+                    for (let j = 0; j < points.length; j++) {
+                        let ath = parseFloat(points[j].getAttribute("ath"));
+                        let atv = parseFloat(points[j].getAttribute("atv"));
+
+                        // The Magical Reverse Math [Pixels to Spherical reversed]
+                        let x = ((ath / hfov) + 0.5) * img.width;
+                        let y = ((atv / vfov) + 0.5) * img.height;
+                        ptsArray.push({ x: x, y: y });
+                    }
+
+                    apartments.push({
+                        id: Date.now() + Math.random(),
+                        number: name,
+                        points: ptsArray
+                    });
+                }
+            }
+            updateUI();
             redraw();
-            return;
         }
 
-        if (appMode === 'VIEW_SINGLE' && selectedAptIndex !== -1) {
-            const apt = apartments[selectedAptIndex];
-            for (let i = 0; i < apt.points.length; i++) {
-                if (Math.hypot((apt.points[i].x - pos.x) * zoomLevel, (apt.points[i].y - pos.y) * zoomLevel) <= HANDLE_RADIUS + 4) {
-                    selectedPointIndex = i; isDragging = true; 
-                    redraw(); return;
-                }
-            }
-        }
+        // --- WORKFLOW B: SAVE OVERWRITE XML ---
+        document.getElementById('btnSaveXML').addEventListener('click', async () => {
+            if (!xmlFileHandle || !originalXmlContent) return alert("Please open a project folder first!");
 
-        let clickedOnShape = false;
-        if (appMode === 'VIEW_ALL') {
-            for (let i = 0; i < apartments.length; i++) {
-                let inside = false;
-                let pts = apartments[i].points;
-                for (let j = 0, k = pts.length - 1; j < pts.length; k = j++) {
-                    let xi = pts[j].x, yi = pts[j].y, xj = pts[k].x, yj = pts[k].y;
-                    if (((yi > pos.y) !== (yj > pos.y)) && (pos.x < (xj - xi) * (pos.y - yi) / (yj - yi) + xi)) inside = !inside;
-                }
-                if (inside) { 
-                    selectedAptIndex = i; appMode = 'VIEW_SINGLE'; 
-                    clickedOnShape = true;
-                    updateUI(); redraw(); 
-                    return; 
-                }
-            }
-        }
+            const hfov = parseFloat(document.getElementById('hfovFol').value);
+            const vfov = parseFloat(document.getElementById('vfovFol').value);
+            const prefix = document.getElementById('prefixFolder').value;
+            const selectedScene = document.getElementById('sceneSelect').value;
 
-        // Trigger Panning if left-clicking on Empty Space
-        if (!clickedOnShape && appMode !== 'DRAWING') {
-            selectedAptIndex = -1; selectedPointIndex = -1;
-            isPanning = true;
-            startPanX = e.pageX; startPanY = e.pageY;
-            startScrollLeft = editorView.scrollLeft; startScrollTop = editorView.scrollTop;
-            canvas.style.cursor = 'grabbing';
-            updateUI(); redraw();
-        }
-    });
+            if (!selectedScene) return alert("Please select a target scene.");
 
-    canvas.addEventListener('mousemove', (e) => { 
-        if (isPanning) {
-            editorView.scrollLeft = startScrollLeft - (e.pageX - startPanX);
-            editorView.scrollTop = startScrollTop - (e.pageY - startPanY);
-            return;
-        }
-        if (isDragging && appMode === 'VIEW_SINGLE') { 
-            apartments[selectedAptIndex].points[selectedPointIndex] = getCanvasMousePos(e); 
-            redraw(); 
-        } 
-    });
-
-    window.addEventListener('mouseup', (e) => { 
-        if (isPanning) {
-            isPanning = false;
-            canvas.style.cursor = spacePressed ? 'grab' : 'crosshair';
-        }
-        isDragging = false; 
-    });
-
-    // --- UI Controls ---
-    function updateUI() {
-        document.getElementById('drawControls').style.display = (appMode === 'DRAWING') ? 'block' : 'none';
-        document.getElementById('defaultControls').style.display = (appMode !== 'DRAWING') ? 'block' : 'none';
-        
-        aptListEl.innerHTML = '';
-        apartments.forEach((apt, idx) => {
-            const div = document.createElement('div');
-            div.className = `apt-item ${(idx === selectedAptIndex && appMode === 'VIEW_SINGLE') ? 'selected' : ''}`;
-            div.innerHTML = `<span>Apt <strong>${apt.number}</strong> (${apt.points.length} pts)</span>`;
-            div.onclick = () => { 
-                if(appMode === 'DRAWING') return; 
-                selectedAptIndex = idx; selectedPointIndex = -1; appMode = 'VIEW_SINGLE';
-                updateUI(); redraw(); 
-            };
-            aptListEl.appendChild(div);
-        });
-    }
-
-    document.getElementById('btnShowAll').addEventListener('click', () => {
-        appMode = 'VIEW_ALL'; selectedAptIndex = -1; selectedPointIndex = -1; updateUI(); redraw();
-    });
-
-    document.getElementById('btnStartDraw').addEventListener('click', () => {
-        appMode = 'DRAWING'; drawingPoints = []; updateUI(); redraw();
-    });
-
-    document.getElementById('btnCancelDraw').addEventListener('click', () => {
-        appMode = 'VIEW_ALL'; drawingPoints = []; updateUI(); redraw();
-    });
-
-    document.getElementById('btnFinishDraw').addEventListener('click', () => {
-        if (drawingPoints.length < 3) return alert("A polygon needs at least 3 points!");
-        const num = prompt("Enter Apartment Number / Name:", "801"); 
-        if (!num) return;
-        apartments.push({ id: Date.now(), number: num, points: [...drawingPoints] });
-        selectedAptIndex = apartments.length - 1; appMode = 'VIEW_SINGLE'; drawingPoints = []; updateUI(); redraw();
-    });
-
-    document.getElementById('btnDeleteApt').addEventListener('click', () => {
-        if (selectedAptIndex === -1) return alert("Select a hotspot from the list first to delete it.");
-        apartments.splice(selectedAptIndex, 1); appMode = 'VIEW_ALL'; selectedAptIndex = -1; updateUI(); redraw();
-    });
-
-    function toggleApiKey() {
-        const provider = document.getElementById('apiProvider').value;
-        document.getElementById('apiKeyContainer').style.display = (provider === 'ollama') ? 'none' : 'block';
-    }
-
-    // --- AI Detection Logic ---
-    document.getElementById('btnRunAI').addEventListener('click', async () => {
-        const provider = document.getElementById('apiProvider').value;
-        const apiKey = document.getElementById('apiKey').value;
-
-        if (!img.src) return alert("Please upload a floor plan image first!");
-        if (provider !== 'ollama' && !apiKey) return alert("Please paste your API Key for online detection.");
-
-        alert(`AI Processing floor plan using ${provider}... Please wait.`);
-
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = img.width; tempCanvas.height = img.height;
-        tempCanvas.getContext('2d').drawImage(img, 0, 0);
-        const base64Img = tempCanvas.toDataURL("image/jpeg", 0.9).split(',')[1];
-
-        const promptText = `Analyze this floor plan. Detect all individual apartment units that have apartment numbers. Return ONLY a valid JSON array of objects with format: [{"number": "811", "polygon": [[100, 200], [300, 200], [300, 400], [100, 400]]}]. Provide accurate pixel coordinates for outer corners.`;
-
-        try {
-            let resJson;
-            if (provider === 'nvidia') {
-                const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
-                    method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-                    body: JSON.stringify({ model: "meta/llama-3.2-90b-vision-instruct", messages: [{ role: "user", content: [ { type: "text", text: promptText }, { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Img}` } } ] }], max_tokens: 2048, temperature: 0.2 })
+            // Generate New XML for all current hotspots
+            let hotspotXml = '';
+            apartments.forEach(apt => {
+                hotspotXml += `\t\t<hotspot name="${prefix}${apt.number}" style="mypolygonalhotspotstylename"\n\t\t\tbordercolor="" borderwidth="1"\n\t\t\tfillcolor="0xAD952F" fillalpha="0.2" capture="false"\n\t\t\tzorder="5"\n\t\t\tonhover="set(fillalpha, 0.5);"\n\t\t\tonout="set(fillalpha, 0.2);">\n`;
+                apt.points.forEach(p => {
+                    const ath = ((p.x / img.width) - 0.5) * hfov; const atv = ((p.y / img.height) - 0.5) * vfov;
+                    hotspotXml += `\t\t\t<point ath="${ath.toFixed(6)}" atv="${atv.toFixed(6)}" />\n`;
                 });
-                if (!response.ok) throw new Error(`NVIDIA API returned ${response.status}`);
-                const data = await response.json(); 
-                resJson = JSON.parse(data.choices[0].message.content.replace(/```json/g, '').replace(/```/g, '').trim());
-            } else if (provider === 'ollama') {
-                const response = await fetch("http://localhost:11434/api/generate", {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ model: "llava", prompt: promptText, images: [base64Img], stream: false, format: "json" })
-                });
-                if (!response.ok) throw new Error("Could not connect to Ollama.");
-                const data = await response.json(); resJson = JSON.parse(data.response);
-            } else if (provider === 'openai') {
-                const response = await fetch("https://api.openai.com/v1/chat/completions", {
-                    method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-                    body: JSON.stringify({ model: "gpt-4o", messages: [{ role: "user", content: [ { type: "text", text: promptText }, { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Img}` } } ] }], response_format: { type: "json_object" } })
-                });
-                if (!response.ok) throw new Error(`OpenAI API returned ${response.status}`);
-                const data = await response.json(); resJson = JSON.parse(data.choices[0].message.content);
-            }
-
-            const detected = resJson.apartments || resJson;
-            apartments = detected.map(item => ({ id: Date.now() + Math.random(), number: item.number, points: item.polygon.map(p => ({ x: p[0], y: p[1] })) }));
-            appMode = 'VIEW_ALL'; updateAptListUI(); redraw();
-            alert(`Success! AI detected ${apartments.length} apartments.`);
-        } catch (err) { console.error(err); alert("AI processing failed.\n\nError: " + err.message); }
-    });
-
-    // --- KRPANO XML EXPORT ---
-    document.getElementById('btnExportXML').addEventListener('click', () => {
-        const hfov = parseFloat(document.getElementById('hfov').value);
-        const vfov = parseFloat(document.getElementById('vfov').value);
-        const prefix = document.getElementById('hotspotPrefix').value; 
-
-        let xml = '';
-        apartments.forEach(apt => {
-            xml += `<hotspot name="${prefix}${apt.number}" style="mypolygonalhotspotstylename"\n\tbordercolor="" borderwidth="1"\n\tfillcolor="0xAD952F" fillalpha="0.2" capture="false"\n\tzorder="5"\n\tonhover="set(fillalpha, 0.5);"\n\tonout="set(fillalpha, 0.2);">\n`;
-            apt.points.forEach(p => {
-                const ath = ((p.x / img.width) - 0.5) * hfov; const atv = ((p.y / img.height) - 0.5) * vfov;
-                xml += `    <point ath="${ath.toFixed(6)}" atv="${atv.toFixed(6)}" />\n`;
+                hotspotXml += `\t\t</hotspot>\n`;
             });
-            xml += `</hotspot>\n\n`;
-        });
-        document.getElementById('xmlOutput').value = xml;
-    });
 
-    toggleApiKey();
-    updateUI();
-</script>
+            // Smart Regex Replacement: 
+            // 1. Find the target Scene
+            // 2. Remove ONLY existing polygonal hotspots inside it (hotspots with <point> tags)
+            // 3. Inject our fresh hotspot list.
+            const sceneRegex = new RegExp(`(<scene[^>]*name=["']${selectedScene}["'][^>]*>)([\\s\\S]*?)(</scene>)`, 'i');
+
+            if (sceneRegex.test(originalXmlContent)) {
+                let match = sceneRegex.exec(originalXmlContent);
+                let sceneStart = match[1];
+                let sceneBody = match[2];
+                let sceneEnd = match[3];
+
+                // Strip existing polygonal hotspots safely
+                let cleanSceneBody = sceneBody.replace(/<hotspot[^>]*>[\s\S]*?<point[\s\S]*?<\/hotspot>/gi, '');
+
+                // Re-assemble XML
+                let updatedXml = originalXmlContent.replace(sceneRegex, `${sceneStart}${cleanSceneBody}\n\t\t<!-- Inject Editor Hotspots -->\n${hotspotXml}\n\t${sceneEnd}`);
+
+                try {
+                    const writable = await xmlFileHandle.createWritable();
+                    await writable.write(updatedXml);
+                    await writable.close();
+                    originalXmlContent = updatedXml; // Keep memory in sync
+                    alert(`✅ Success! Hotspots perfectly overwritten and saved into ${selectedScene} in tour.xml`);
+                } catch (err) {
+                    alert("Save failed. Ensure tour.xml is not open/locked in another program.");
+                }
+            } else {
+                alert(`Error: Could not find the closing </scene> tag for "${selectedScene}".`);
+            }
+        });
+
+        // --- PANNING, ZOOMING, & DRAWING ENGINE ---
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT') {
+                spacePressed = true; canvas.style.cursor = 'grab'; e.preventDefault();
+            }
+        });
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'Space') { spacePressed = false; canvas.style.cursor = 'crosshair'; }
+        });
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+        function setZoom(newZoom) {
+            zoomLevel = Math.max(0.05, Math.min(5.0, newZoom));
+            document.getElementById('zoomLabel').innerText = Math.round(zoomLevel * 100) + '%';
+            if (img.src) { canvas.width = img.width * zoomLevel; canvas.height = img.height * zoomLevel; redraw(); }
+        }
+        function fitToScreen() {
+            if (!img.src) return;
+            const scaleX = (editorView.clientWidth - 40) / img.width; const scaleY = (editorView.clientHeight - 40) / img.height;
+            setZoom(Math.min(scaleX, scaleY) || 1.0);
+        }
+        document.getElementById('btnZoomIn').addEventListener('click', () => setZoom(zoomLevel * 1.25));
+        document.getElementById('btnZoomOut').addEventListener('click', () => setZoom(zoomLevel / 1.25));
+        document.getElementById('btnZoomFit').addEventListener('click', fitToScreen);
+        canvas.addEventListener('wheel', (e) => { if (e.ctrlKey) return; e.preventDefault(); setZoom(e.deltaY < 0 ? zoomLevel * 1.1 : zoomLevel / 1.1); });
+
+        function redraw() {
+            if (!img.src || img.src === "") return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            if (appMode === 'DRAWING' && drawingPoints.length > 0) {
+                ctx.beginPath(); ctx.moveTo(drawingPoints[0].x * zoomLevel, drawingPoints[0].y * zoomLevel);
+                for (let i = 1; i < drawingPoints.length; i++) ctx.lineTo(drawingPoints[i].x * zoomLevel, drawingPoints[i].y * zoomLevel);
+                ctx.strokeStyle = "#FFD700"; ctx.lineWidth = 2; ctx.stroke();
+                drawingPoints.forEach(pt => {
+                    ctx.beginPath(); ctx.arc(pt.x * zoomLevel, pt.y * zoomLevel, HANDLE_RADIUS, 0, Math.PI * 2);
+                    ctx.fillStyle = "#FF0000"; ctx.fill(); ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 1.5; ctx.stroke();
+                });
+            } else if (appMode === 'VIEW_ALL') {
+                apartments.forEach(apt => drawPolygon(apt, false));
+            } else if (appMode === 'VIEW_SINGLE') {
+                if (selectedAptIndex !== -1 && apartments[selectedAptIndex]) drawPolygon(apartments[selectedAptIndex], true);
+            }
+        }
+
+        function drawPolygon(apt, isSelected) {
+            if (apt.points.length === 0) return;
+            ctx.beginPath(); ctx.moveTo(apt.points[0].x * zoomLevel, apt.points[0].y * zoomLevel);
+            for (let i = 1; i < apt.points.length; i++) ctx.lineTo(apt.points[i].x * zoomLevel, apt.points[i].y * zoomLevel);
+            ctx.closePath();
+            ctx.fillStyle = isSelected ? "rgba(255, 215, 0, 0.4)" : "rgba(173, 149, 47, 0.25)"; ctx.fill();
+            ctx.strokeStyle = isSelected ? "#FFD700" : "#AD952F"; ctx.lineWidth = isSelected ? 3 : 1.5; ctx.stroke();
+
+            let cx = 0, cy = 0; apt.points.forEach(p => { cx += p.x; cy += p.y; }); cx /= apt.points.length; cy /= apt.points.length;
+            ctx.fillStyle = "#FFFFFF"; ctx.font = "bold " + Math.max(12, Math.min(18, 14 * zoomLevel)) + "px Arial";
+            ctx.shadowColor = "black"; ctx.shadowBlur = 4; ctx.fillText(apt.number, (cx * zoomLevel) - 10, (cy * zoomLevel) + 5); ctx.shadowBlur = 0;
+
+            if (isSelected) {
+                apt.points.forEach((pt, pIdx) => {
+                    ctx.beginPath(); ctx.arc(pt.x * zoomLevel, pt.y * zoomLevel, HANDLE_RADIUS, 0, Math.PI * 2);
+                    ctx.fillStyle = (pIdx === selectedPointIndex) ? "#FF0000" : "#00E5FF"; ctx.fill();
+                    ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 1.5; ctx.stroke();
+                });
+            }
+        }
+
+        function getCanvasMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return { x: ((e.clientX - rect.left) * (canvas.width / rect.width)) / zoomLevel, y: ((e.clientY - rect.top) * (canvas.height / rect.height)) / zoomLevel };
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (!img.src) return;
+            if (e.button === 1 || e.button === 2 || (spacePressed && e.button === 0)) {
+                isPanning = true; startPanX = e.pageX; startPanY = e.pageY;
+                startScrollLeft = editorView.scrollLeft; startScrollTop = editorView.scrollTop;
+                canvas.style.cursor = 'grabbing'; e.preventDefault(); return;
+            }
+            if (e.button !== 0) return;
+            const pos = getCanvasMousePos(e);
+
+            if (appMode === 'DRAWING') { drawingPoints.push(pos); redraw(); return; }
+
+            if (appMode === 'VIEW_SINGLE' && selectedAptIndex !== -1) {
+                const apt = apartments[selectedAptIndex];
+                for (let i = 0; i < apt.points.length; i++) {
+                    if (Math.hypot((apt.points[i].x - pos.x) * zoomLevel, (apt.points[i].y - pos.y) * zoomLevel) <= HANDLE_RADIUS + 4) {
+                        selectedPointIndex = i; isDragging = true; redraw(); return;
+                    }
+                }
+            }
+
+            let clickedOnShape = false;
+            if (appMode === 'VIEW_ALL') {
+                for (let i = 0; i < apartments.length; i++) {
+                    let inside = false; let pts = apartments[i].points;
+                    for (let j = 0, k = pts.length - 1; j < pts.length; k = j++) {
+                        let xi = pts[j].x, yi = pts[j].y, xj = pts[k].x, yj = pts[k].y;
+                        if (((yi > pos.y) !== (yj > pos.y)) && (pos.x < (xj - xi) * (pos.y - yi) / (yj - yi) + xi)) inside = !inside;
+                    }
+                    if (inside) { selectedAptIndex = i; appMode = 'VIEW_SINGLE'; clickedOnShape = true; updateUI(); redraw(); return; }
+                }
+            }
+
+            if (!clickedOnShape && appMode !== 'DRAWING') {
+                selectedAptIndex = -1; selectedPointIndex = -1;
+                isPanning = true; startPanX = e.pageX; startPanY = e.pageY;
+                startScrollLeft = editorView.scrollLeft; startScrollTop = editorView.scrollTop;
+                canvas.style.cursor = 'grabbing'; updateUI(); redraw();
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isPanning) { editorView.scrollLeft = startScrollLeft - (e.pageX - startPanX); editorView.scrollTop = startScrollTop - (e.pageY - startPanY); return; }
+            if (isDragging && appMode === 'VIEW_SINGLE') { apartments[selectedAptIndex].points[selectedPointIndex] = getCanvasMousePos(e); redraw(); }
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (isPanning) { isPanning = false; canvas.style.cursor = spacePressed ? 'grab' : 'crosshair'; }
+            isDragging = false;
+        });
+
+        function updateUI() {
+            document.getElementById('drawControls').style.display = (appMode === 'DRAWING') ? 'block' : 'none';
+            document.getElementById('defaultControls').style.display = (appMode !== 'DRAWING') ? 'block' : 'none';
+
+            aptListEl.innerHTML = '';
+            apartments.forEach((apt, idx) => {
+                const div = document.createElement('div');
+                div.className = `apt-item ${(idx === selectedAptIndex && appMode === 'VIEW_SINGLE') ? 'selected' : ''}`;
+                div.innerHTML = `<span>Apt <strong>${apt.number}</strong> (${apt.points.length} pts)</span>`;
+                div.onclick = () => { if (appMode === 'DRAWING') return; selectedAptIndex = idx; selectedPointIndex = -1; appMode = 'VIEW_SINGLE'; updateUI(); redraw(); };
+                aptListEl.appendChild(div);
+            });
+        }
+
+        document.getElementById('btnShowAll').addEventListener('click', () => { appMode = 'VIEW_ALL'; selectedAptIndex = -1; selectedPointIndex = -1; updateUI(); redraw(); });
+        document.getElementById('btnStartDraw').addEventListener('click', () => { if (!img.src) return alert("Select a scene to load an image first!"); appMode = 'DRAWING'; drawingPoints = []; updateUI(); redraw(); });
+        document.getElementById('btnCancelDraw').addEventListener('click', () => { appMode = 'VIEW_ALL'; drawingPoints = []; updateUI(); redraw(); });
+        document.getElementById('btnFinishDraw').addEventListener('click', () => {
+            if (drawingPoints.length < 3) return alert("A polygon needs at least 3 points!");
+            const num = prompt("Enter Apartment Number / Name:", "801"); if (!num) return;
+            apartments.push({ id: Date.now(), number: num, points: [...drawingPoints] });
+            selectedAptIndex = apartments.length - 1; appMode = 'VIEW_SINGLE'; drawingPoints = []; updateUI(); redraw();
+        });
+        document.getElementById('btnDeleteApt').addEventListener('click', () => {
+            if (selectedAptIndex === -1) return alert("Select a hotspot from the list first to delete it.");
+            apartments.splice(selectedAptIndex, 1); appMode = 'VIEW_ALL'; selectedAptIndex = -1; updateUI(); redraw();
+        });
+
+    </script>
 </body>
+
 </html>
