@@ -376,6 +376,12 @@ function redraw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
+    const selected = appMode === 'VIEW_SINGLE' ? apartments[selectedAptIndex] : null;
+    apartments.forEach(apt => {
+        if (apt.visible !== false && apt !== selected) drawPolygon(apt, false);
+    });
+    if (selected && selected.visible !== false) drawPolygon(selected, true);
+
     if (appMode === 'DRAWING' && drawingPoints.length > 0) {
         ctx.beginPath(); ctx.moveTo(drawingPoints[0].x * zoomLevel, drawingPoints[0].y * zoomLevel);
         for (let i = 1; i < drawingPoints.length; i++) ctx.lineTo(drawingPoints[i].x * zoomLevel, drawingPoints[i].y * zoomLevel);
@@ -384,10 +390,6 @@ function redraw() {
             ctx.beginPath(); ctx.arc(pt.x * zoomLevel, pt.y * zoomLevel, HANDLE_RADIUS, 0, Math.PI * 2);
             ctx.fillStyle = "#FF0000"; ctx.fill(); ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 1.5; ctx.stroke();
         });
-    } else if (appMode === 'VIEW_ALL') {
-        apartments.forEach(apt => drawPolygon(apt, false));
-    } else if (appMode === 'VIEW_SINGLE') {
-        if (selectedAptIndex !== -1 && apartments[selectedAptIndex]) drawPolygon(apartments[selectedAptIndex], true);
     }
 }
 
@@ -484,6 +486,7 @@ canvas.addEventListener('mousedown', (e) => {
     let clickedOnShape = false;
     if (appMode === 'VIEW_ALL') {
         for (let i = 0; i < apartments.length; i++) {
+            if (apartments[i].visible === false) continue;
             let inside = false; let pts = apartments[i].points;
             for (let j = 0, k = pts.length - 1; j < pts.length; k = j++) {
                 let xi = pts[j].x, yi = pts[j].y, xj = pts[k].x, yj = pts[k].y;
@@ -542,6 +545,47 @@ window.addEventListener('blur', () => {
     canvas.style.cursor = 'crosshair';
 });
 
+function getNextHotspotNumber() {
+    let number = apartments.length + 1;
+    const names = new Set(apartments.map(apt => String(apt.number)));
+    while (names.has(String(number))) number++;
+    return String(number);
+}
+
+function renameHotspot(apt, label) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'hotspot-name-input';
+    input.value = apt.number;
+    input.required = true;
+    input.setAttribute('aria-label', 'Hotspot name');
+    let finished = false;
+    function finishRename(save, showError = false) {
+        if (finished) return;
+        const name = input.value.trim();
+        const duplicate = apartments.some(other => other !== apt && String(other.number) === name);
+        input.setCustomValidity(!name ? 'Enter a hotspot name.' : duplicate ? 'This hotspot name is already in use.' : '');
+        if (save && showError && !input.reportValidity()) return;
+        finished = true;
+        if (save && name && !duplicate) apt.number = name;
+        updateUI();
+        redraw();
+    }
+    input.addEventListener('click', event => event.stopPropagation());
+    input.addEventListener('input', () => input.setCustomValidity(''));
+    input.addEventListener('keydown', event => {
+        event.stopPropagation();
+        if (event.key === 'Enter' || event.key === 'Escape') {
+            event.preventDefault();
+            finishRename(event.key === 'Enter', event.key === 'Enter');
+        }
+    });
+    input.addEventListener('blur', () => finishRename(true));
+    label.replaceChildren(input);
+    input.focus();
+    input.select();
+}
+
 function updateUI() {
     document.getElementById('hotspotCount').textContent = apartments.length;
     document.getElementById('hotspotEmpty').hidden = apartments.length > 0;
@@ -563,9 +607,38 @@ function updateUI() {
         const name = document.createElement('strong');
         name.textContent = apt.number;
         label.append('Apt ', name, ` (${apt.points.length} pts)`);
-        row.append(label);
+        const visibilityToggle = document.createElement('input');
+        visibilityToggle.type = 'checkbox';
+        visibilityToggle.className = 'hotspot-visibility-toggle';
+        visibilityToggle.setAttribute('role', 'switch');
+        visibilityToggle.setAttribute('aria-label', `Show hotspot ${apt.number}`);
+        visibilityToggle.checked = apt.visible !== false;
+        visibilityToggle.addEventListener('click', event => event.stopPropagation());
+        visibilityToggle.addEventListener('change', () => {
+            apt.visible = visibilityToggle.checked;
+            if (!apt.visible && selectedAptIndex === idx) {
+                selectedAptIndex = -1;
+                selectedPointIndex = -1;
+                isDragging = false;
+                if (appMode === 'VIEW_SINGLE') appMode = 'VIEW_ALL';
+                updateUI();
+            }
+            redraw();
+        });
+        const renameButton = document.createElement('button');
+        renameButton.type = 'button';
+        renameButton.className = 'secondary apt-rename-button';
+        renameButton.textContent = '✎';
+        renameButton.title = 'Rename hotspot';
+        renameButton.setAttribute('aria-label', `Rename hotspot ${apt.number}`);
+        renameButton.addEventListener('click', event => {
+            event.stopPropagation();
+            renameHotspot(apt, label);
+        });
+        row.append(visibilityToggle, label, renameButton);
         row.addEventListener('click', () => {
             if (appMode === 'DRAWING') return;
+            apt.visible = true;
             selectedAptIndex = idx; selectedPointIndex = -1;
             appMode = 'VIEW_SINGLE'; updateUI(); redraw();
         });
@@ -589,12 +662,21 @@ function updateUI() {
     });
 }
 
-document.getElementById('btnShowAll').addEventListener('click', () => { appMode = 'VIEW_ALL'; selectedAptIndex = -1; selectedPointIndex = -1; updateUI(); redraw(); });
+document.getElementById('btnShowAll').addEventListener('click', () => {
+    apartments.forEach(apt => { apt.visible = true; });
+    if (appMode !== 'DRAWING') {
+        appMode = 'VIEW_ALL';
+        selectedAptIndex = -1;
+        selectedPointIndex = -1;
+    }
+    updateUI();
+    redraw();
+});
 document.getElementById('btnStartDraw').addEventListener('click', () => { if (!img.src) return alert("Select a scene to load an image first!"); appMode = 'DRAWING'; drawingPoints = []; updateUI(); redraw(); });
 document.getElementById('btnCancelDraw').addEventListener('click', () => { appMode = 'VIEW_ALL'; drawingPoints = []; updateUI(); redraw(); });
 document.getElementById('btnFinishDraw').addEventListener('click', () => {
     if (drawingPoints.length < 3) return alert("A polygon needs at least 3 points!");
-    const num = prompt("Enter Apartment Number / Name:", "801"); if (!num) return;
+    const num = getNextHotspotNumber();
     apartments.push({ id: Date.now(), number: num, points: [...drawingPoints] });
     selectedAptIndex = apartments.length - 1; appMode = 'VIEW_SINGLE'; drawingPoints = []; updateUI(); redraw();
 });

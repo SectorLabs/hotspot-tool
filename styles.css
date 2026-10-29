@@ -552,7 +552,39 @@ input[type=number] {
     background:#26382b;
     border-color:#7f9d60;
 }
+.hotspot-visibility-toggle {
+    appearance:none;
+    flex:none;
+    width:30px;
+    height:18px;
+    margin:0;
+    padding:2px;
+    border:1px solid #52635b;
+    border-radius:12px;
+    background:#26332e;
+    cursor:pointer;
+}
+.hotspot-visibility-toggle::before {
+    content:"";
+    display:block;
+    width:12px;
+    height:12px;
+    border-radius:50%;
+    background:#91a89b;
+}
+.hotspot-visibility-toggle:checked {
+    background:var(--accent);
+}
+.hotspot-visibility-toggle:checked::before {
+    transform:translateX(12px);
+    background:#203723;
+}
+.hotspot-visibility-toggle:focus-visible {
+    outline:2px solid var(--accent);
+    outline-offset:3px;
+}
 .apt-item-label {
+    flex:1;
     min-width:0;
     overflow-wrap:anywhere;
     font-size:13px;
@@ -562,6 +594,19 @@ input[type=number] {
 .apt-item-label strong {
     font-weight:600;
     color:#e1ecdb;
+}
+.apt-rename-button {
+    flex:none;
+    width:26px;
+    padding:3px;
+    margin:0;
+    font-size:18px;
+}
+.hotspot-name-input {
+    width:100%;
+    min-width:0;
+    margin:0;
+    padding:4px;
 }
 .apt-copy-button {
     width:auto;
@@ -712,8 +757,8 @@ input[type=number] {
     position:relative;
     overflow:auto;
     display:flex;
-    align-items:center;
-    justify-content:center;
+    align-items:flex-start;
+    justify-content:flex-start;
     padding:32px;
     background-color:#0e1619;
     background-image:radial-gradient(#2e3d37 1px,transparent 1px);
