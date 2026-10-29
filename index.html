@@ -360,7 +360,7 @@
 
                     <div id="drawControls">
                         <p style="font-size: 12px; margin-top: 0; margin-bottom: 10px; color: #FFD700;">✏️ Click on
-                            canvas to add points.</p>
+                            canvas to add points. Drag an existing dot to reposition it.</p>
                         <button id="btnFinishDraw" class="success">Finish Shape</button>
                         <button id="btnCancelDraw" class="danger" style="margin-bottom: 0;">Cancel</button>
                     </div>
@@ -766,7 +766,20 @@
             if (e.button !== 0) return;
             const pos = getCanvasMousePos(e);
 
-            if (appMode === 'DRAWING') { drawingPoints.push(pos); redraw(); return; }
+            if (appMode === 'DRAWING') {
+                selectedPointIndex = drawingPoints.findIndex(point =>
+                    Math.hypot((point.x - pos.x) * zoomLevel, (point.y - pos.y) * zoomLevel) <= HANDLE_RADIUS + 4
+                );
+                if (selectedPointIndex !== -1) {
+                    isDragging = true;
+                    canvas.style.cursor = 'grabbing';
+                    e.preventDefault();
+                } else {
+                    drawingPoints.push(pos);
+                }
+                redraw();
+                return;
+            }
 
             if (appMode === 'VIEW_SINGLE' && selectedAptIndex !== -1) {
                 const apt = apartments[selectedAptIndex];
@@ -797,14 +810,31 @@
             }
         });
 
-        canvas.addEventListener('mousemove', (e) => {
+        window.addEventListener('mousemove', (e) => {
             if (isPanning) { editorView.scrollLeft = startScrollLeft - (e.pageX - startPanX); editorView.scrollTop = startScrollTop - (e.pageY - startPanY); return; }
-            if (isDragging && appMode === 'VIEW_SINGLE') { apartments[selectedAptIndex].points[selectedPointIndex] = getCanvasMousePos(e); redraw(); }
+            if (!isDragging) return;
+            const points = appMode === 'DRAWING'
+                ? drawingPoints
+                : appMode === 'VIEW_SINGLE' ? apartments[selectedAptIndex]?.points : null;
+            if (!points || !points[selectedPointIndex]) return;
+            const pos = getCanvasMousePos(e);
+            points[selectedPointIndex] = {
+                x: Math.max(0, Math.min(img.width, pos.x)),
+                y: Math.max(0, Math.min(img.height, pos.y))
+            };
+            redraw();
         });
 
         window.addEventListener('mouseup', () => {
-            if (isPanning) { isPanning = false; canvas.style.cursor = spacePressed ? 'grab' : 'crosshair'; }
+            isPanning = false;
             isDragging = false;
+            canvas.style.cursor = spacePressed ? 'grab' : 'crosshair';
+        });
+        window.addEventListener('blur', () => {
+            isPanning = false;
+            isDragging = false;
+            spacePressed = false;
+            canvas.style.cursor = 'crosshair';
         });
 
         function updateUI() {
